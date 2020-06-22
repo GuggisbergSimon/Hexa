@@ -3,35 +3,39 @@ using UnityEngine.EventSystems;
 
 public class HexMapEditor : MonoBehaviour
 {
-    private enum OptionalToggle
+    public Color[] colors;
+
+    public HexGrid hexGrid;
+
+    int activeElevation;
+
+    Color activeColor;
+
+    int brushSize;
+
+    bool applyColor;
+    bool applyElevation = true;
+
+    enum OptionalToggle
     {
         Ignore,
         Yes,
         No
     }
 
-    private Color activeColor;
-    private int activeElevation;
-    private bool applyColor;
-    private bool applyElevation = true;
-    private int brushSize;
-    private OptionalToggle riverMode;
-    private bool isDrag;
-    private HexDirection dragDirection;
-    private HexCell previousCell;
+    OptionalToggle riverMode;
 
-    public Color[] colors;
-    public HexGrid hexGrid;
+    bool isDrag;
+    HexDirection dragDirection;
+    HexCell previousCell;
 
     public void SelectColor(int index)
     {
         applyColor = index >= 0;
-        if (applyColor) activeColor = colors[index];
-    }
-
-    public void SetElevation(float elevation)
-    {
-        activeElevation = (int) elevation;
+        if (applyColor)
+        {
+            activeColor = colors[index];
+        }
     }
 
     public void SetApplyElevation(bool toggle)
@@ -39,14 +43,37 @@ public class HexMapEditor : MonoBehaviour
         applyElevation = toggle;
     }
 
-    private void Awake()
+    public void SetElevation(float elevation)
+    {
+        activeElevation = (int) elevation;
+    }
+
+    public void SetBrushSize(float size)
+    {
+        brushSize = (int) size;
+    }
+
+    public void SetRiverMode(int mode)
+    {
+        riverMode = (OptionalToggle) mode;
+    }
+
+    public void ShowUI(bool visible)
+    {
+        hexGrid.ShowUI(visible);
+    }
+
+    void Awake()
     {
         SelectColor(0);
     }
 
-    private void Update()
+    void Update()
     {
-        if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
+        if (
+            Input.GetMouseButton(0) &&
+            !EventSystem.current.IsPointerOverGameObject()
+        )
         {
             HandleInput();
         }
@@ -56,9 +83,9 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    private void HandleInput()
+    void HandleInput()
     {
-        var inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         if (Physics.Raycast(inputRay, out hit))
         {
@@ -81,7 +108,7 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    private void ValidateDrag(HexCell currentCell)
+    void ValidateDrag(HexCell currentCell)
     {
         for (dragDirection = HexDirection.NE; dragDirection <= HexDirection.NW; dragDirection++)
         {
@@ -95,7 +122,7 @@ public class HexMapEditor : MonoBehaviour
         isDrag = false;
     }
 
-    private void EditCells(HexCell center)
+    void EditCells(HexCell center)
     {
         int centerX = center.coordinates.X;
         int centerZ = center.coordinates.Z;
@@ -117,13 +144,24 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    private void EditCell(HexCell cell)
+    void EditCell(HexCell cell)
     {
         if (cell)
         {
-            if (applyColor) cell.Color = activeColor;
-            if (applyElevation) cell.Elevation = activeElevation;
-            if (riverMode == OptionalToggle.No) cell.RemoveRiver();
+            if (applyColor)
+            {
+                cell.Color = activeColor;
+            }
+
+            if (applyElevation)
+            {
+                cell.Elevation = activeElevation;
+            }
+
+            if (riverMode == OptionalToggle.No)
+            {
+                cell.RemoveRiver();
+            }
             else if (isDrag && riverMode == OptionalToggle.Yes)
             {
                 HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
@@ -133,20 +171,5 @@ public class HexMapEditor : MonoBehaviour
                 }
             }
         }
-    }
-
-    public void SetBrushSize(float size)
-    {
-        brushSize = (int) size;
-    }
-
-    public void ShowUI(bool visible)
-    {
-        hexGrid.ShowUI(visible);
-    }
-
-    public void SetRiverMod(int mode)
-    {
-        riverMode = (OptionalToggle) mode;
     }
 }
