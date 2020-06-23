@@ -29,11 +29,11 @@ public static class HexMetrics {
 
 	public const float streamBedElevationOffset = -1.75f;
 
+	public const float riverSurfaceElevationOffset = -0.5f;
+
 	public const float noiseScale = 0.003f;
 
 	public const int chunkSizeX = 5, chunkSizeZ = 5;
-
-	public const float riverSurfaceElevationOffset = -0.5f;
 
 	static Vector3[] corners = {
 		new Vector3(0f, 0f, outerRadius),

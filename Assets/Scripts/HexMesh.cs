@@ -86,7 +86,7 @@ public class HexMesh : MonoBehaviour {
 		colors.Add(c3);
 	}
 
-	public void AddTriangleUV (Vector2 uv1, Vector2 uv2, Vector2 uv3) {
+	public void AddTriangleUV (Vector2 uv1, Vector2 uv2, Vector3 uv3) {
 		uvs.Add(uv1);
 		uvs.Add(uv2);
 		uvs.Add(uv3);
@@ -127,7 +127,7 @@ public class HexMesh : MonoBehaviour {
 		colors.Add(c4);
 	}
 
-	public void AddQuadUV (Vector2 uv1, Vector2 uv2, Vector2 uv3, Vector2 uv4) {
+	public void AddQuadUV (Vector2 uv1, Vector2 uv2, Vector3 uv3, Vector3 uv4) {
 		uvs.Add(uv1);
 		uvs.Add(uv2);
 		uvs.Add(uv3);
