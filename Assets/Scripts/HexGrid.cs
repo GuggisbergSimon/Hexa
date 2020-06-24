@@ -5,15 +5,13 @@ using UnityEngine.UI;
 public class HexGrid : MonoBehaviour {
 
 	public int chunkCountX = 4, chunkCountZ = 3;
-
 	public Color defaultColor = Color.white;
-
 	public HexCell cellPrefab;
 	public TextMeshProUGUI cellLabelPrefab;
 	public HexGridChunk chunkPrefab;
-
 	public Texture2D noiseSource;
-
+	public int seed;
+	
 	HexGridChunk[] chunks;
 	HexCell[] cells;
 
@@ -21,6 +19,7 @@ public class HexGrid : MonoBehaviour {
 
 	void Awake () {
 		HexMetrics.noiseSource = noiseSource;
+		HexMetrics.InitializeHashGrid(seed);
 
 		cellCountX = chunkCountX * HexMetrics.chunkSizeX;
 		cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
@@ -52,6 +51,7 @@ public class HexGrid : MonoBehaviour {
 
 	void OnEnable () {
 		HexMetrics.noiseSource = noiseSource;
+		HexMetrics.InitializeHashGrid(seed);
 	}
 
 	public HexCell GetCell (Vector3 position) {
