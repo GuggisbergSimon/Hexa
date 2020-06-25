@@ -7,7 +7,9 @@ public class HexFeatureManager : MonoBehaviour {
 
 	public HexMesh walls;
 
-	public Transform wallTower;
+	public Transform wallTower, bridge;
+
+	public Transform[] special;
 
 	Transform container;
 
@@ -39,7 +41,24 @@ public class HexFeatureManager : MonoBehaviour {
 		return null;
 	}
 
+	public void AddBridge (Vector3 roadCenter1, Vector3 roadCenter2) {
+		roadCenter1 = HexMetrics.Perturb(roadCenter1);
+		roadCenter2 = HexMetrics.Perturb(roadCenter2);
+		Transform instance = Instantiate(bridge);
+		instance.localPosition = (roadCenter1 + roadCenter2) * 0.5f;
+		instance.forward = roadCenter2 - roadCenter1;
+		float length = Vector3.Distance(roadCenter1, roadCenter2);
+		instance.localScale = new Vector3(
+			1f,	1f, length * (1f / HexMetrics.bridgeDesignLength)
+		);
+		instance.SetParent(container, false);
+	}
+
 	public void AddFeature (HexCell cell, Vector3 position) {
+		if (cell.IsSpecial) {
+			return;
+		}
+
 		HexHash hash = HexMetrics.SampleHashGrid(position);
 		Transform prefab = PickPrefab(
 			urbanCollections, cell.UrbanLevel, hash.a, hash.d
@@ -75,6 +94,14 @@ public class HexFeatureManager : MonoBehaviour {
 
 		Transform instance = Instantiate(prefab);
 		position.y += instance.localScale.y * 0.5f;
+		instance.localPosition = HexMetrics.Perturb(position);
+		instance.localRotation = Quaternion.Euler(0f, 360f * hash.e, 0f);
+		instance.SetParent(container, false);
+	}
+
+	public void AddSpecialFeature (HexCell cell, Vector3 position) {
+		HexHash hash = HexMetrics.SampleHashGrid(position);
+		Transform instance = Instantiate(special[cell.SpecialIndex - 1]);
 		instance.localPosition = HexMetrics.Perturb(position);
 		instance.localRotation = Quaternion.Euler(0f, 360f * hash.e, 0f);
 		instance.SetParent(container, false);

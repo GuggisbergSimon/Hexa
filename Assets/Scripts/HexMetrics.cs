@@ -45,6 +45,8 @@ public static class HexMetrics {
 
 	public const float wallTowerThreshold = 0.5f;
 
+	public const float bridgeDesignLength = 7f;
+
 	public const float noiseScale = 0.003f;
 
 	public const int chunkSizeX = 5, chunkSizeZ = 5;
@@ -72,6 +74,8 @@ public static class HexMetrics {
 	};
 
 	public static Texture2D noiseSource;
+
+	public static Color[] colors;
 
 	public static Vector4 SampleNoise (Vector3 position) {
 		return noiseSource.GetPixelBilinear(
