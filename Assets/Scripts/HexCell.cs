@@ -234,9 +234,11 @@ public class HexCell : MonoBehaviour {
 	bool hasIncomingRiver, hasOutgoingRiver;
 	HexDirection incomingRiver, outgoingRiver;
 
-	[SerializeField] HexCell[] neighbors = null;
+	[SerializeField]
+	HexCell[] neighbors;
 
-	[SerializeField] bool[] roads = null;
+	[SerializeField]
+	bool[] roads;
 
 	public HexCell GetNeighbor (HexDirection direction) {
 		return neighbors[(int)direction];

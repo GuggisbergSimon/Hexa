@@ -1,6 +1,6 @@
-﻿using System.IO;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
+using System.IO;
 
 public class HexMapEditor : MonoBehaviour {
 
@@ -8,9 +8,10 @@ public class HexMapEditor : MonoBehaviour {
 
 	int activeElevation;
 	int activeWaterLevel;
-	private int activeTerrainTypeIndex;
 
 	int activeUrbanLevel, activeFarmLevel, activePlantLevel, activeSpecialIndex;
+
+	int activeTerrainTypeIndex;
 
 	int brushSize;
 
@@ -29,11 +30,10 @@ public class HexMapEditor : MonoBehaviour {
 	HexDirection dragDirection;
 	HexCell previousCell;
 
-	public void SetTerrainTypeIndex(int index)
-	{
+	public void SetTerrainTypeIndex (int index) {
 		activeTerrainTypeIndex = index;
 	}
-	
+
 	public void SetApplyElevation (bool toggle) {
 		applyElevation = toggle;
 	}
@@ -48,16 +48,6 @@ public class HexMapEditor : MonoBehaviour {
 
 	public void SetWaterLevel (float level) {
 		activeWaterLevel = (int)level;
-	}
-
-	public void SetApplySpecialIndex(bool toggle)
-	{
-		applySpecialIndex = toggle;
-	}
-
-	public void SetSpecialIndex(float index)
-	{
-		activeSpecialIndex = (int) index;
 	}
 
 	public void SetApplyUrbanLevel (bool toggle) {
@@ -82,6 +72,14 @@ public class HexMapEditor : MonoBehaviour {
 
 	public void SetPlantLevel (float level) {
 		activePlantLevel = (int)level;
+	}
+
+	public void SetApplySpecialIndex (bool toggle) {
+		applySpecialIndex = toggle;
+	}
+
+	public void SetSpecialIndex (float index) {
+		activeSpecialIndex = (int)index;
 	}
 
 	public void SetBrushSize (float size) {
@@ -114,34 +112,6 @@ public class HexMapEditor : MonoBehaviour {
 		else {
 			previousCell = null;
 		}
-	}
-
-	public void Save()
-	{
-		string path = Path.Combine(Application.persistentDataPath, "julien.leresche");
-		using (BinaryWriter writer = new BinaryWriter(File.Open(path, FileMode.Create)))
-		{
-			writer.Write(0);
-			hexGrid.Save(writer);
-		}
-	}
-
-	public void Load()
-	{
-		string path = Path.Combine(Application.persistentDataPath, "julien.leresche");
-		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
-		{
-			int header = reader.ReadInt32();
-			if (header == 0)
-			{
-				hexGrid.Load(reader);
-			}
-			else
-			{
-				Debug.Log("Unknown map format "+ header);
-			}
-		}
-		
 	}
 
 	void HandleInput () {
@@ -195,8 +165,7 @@ public class HexMapEditor : MonoBehaviour {
 
 	void EditCell (HexCell cell) {
 		if (cell) {
-			if (activeTerrainTypeIndex >= 0)
-			{
+			if (activeTerrainTypeIndex >= 0) {
 				cell.TerrainTypeIndex = activeTerrainTypeIndex;
 			}
 			if (applyElevation) {
@@ -205,9 +174,7 @@ public class HexMapEditor : MonoBehaviour {
 			if (applyWaterLevel) {
 				cell.WaterLevel = activeWaterLevel;
 			}
-
-			if (applySpecialIndex)
-			{
+			if (applySpecialIndex) {
 				cell.SpecialIndex = activeSpecialIndex;
 			}
 			if (applyUrbanLevel) {

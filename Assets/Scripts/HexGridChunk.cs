@@ -7,6 +7,10 @@ public class HexGridChunk : MonoBehaviour {
 
 	public HexFeatureManager features;
 
+	private static Color color1 = new Color(1f, 0f, 0f);
+	private static Color color2 = new Color(0f, 1f, 0f);
+	private static Color color3 = new Color(0f, 0f, 1f);
+
 	HexCell[] cells;
 
 	Canvas gridCanvas;
