@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using System.IO;
 
 public class HexMapEditor : MonoBehaviour {
 
 	public HexGrid hexGrid;
+	public Material terrainMaterial;
 
 	int activeElevation;
 	int activeWaterLevel;
@@ -17,6 +19,7 @@ public class HexMapEditor : MonoBehaviour {
 
 	bool applyElevation = true;
 	bool applyWaterLevel = true;
+	private bool editMode;
 
 	bool applyUrbanLevel, applyFarmLevel, applyPlantLevel, applySpecialIndex;
 
@@ -30,6 +33,12 @@ public class HexMapEditor : MonoBehaviour {
 	HexDirection dragDirection;
 	HexCell previousCell;
 
+	public void SetEditMode(bool toggle)
+	{
+		editMode = toggle;
+		hexGrid.ShowUI(!toggle);
+	}
+	
 	public void SetTerrainTypeIndex (int index) {
 		activeTerrainTypeIndex = index;
 	}
@@ -98,8 +107,21 @@ public class HexMapEditor : MonoBehaviour {
 		walledMode = (OptionalToggle)mode;
 	}
 
-	public void ShowUI (bool visible) {
-		hexGrid.ShowUI(visible);
+	public void ShowGrid(bool visible)
+	{
+		if (visible)
+		{
+			terrainMaterial.EnableKeyword("GRID_ON");
+		}
+		else
+		{
+			terrainMaterial.DisableKeyword("GRID_ON");
+		}
+	}
+
+	private void Awake()
+	{
+		terrainMaterial.DisableKeyword("GRID_ON");
 	}
 
 	void Update () {
@@ -125,7 +147,16 @@ public class HexMapEditor : MonoBehaviour {
 			else {
 				isDrag = false;
 			}
-			EditCells(currentCell);
+
+			if (editMode)
+			{
+				EditCells(currentCell);
+			}
+			else
+			{
+				hexGrid.FindDistancesTo(currentCell);
+			}
+
 			previousCell = currentCell;
 		}
 		else {

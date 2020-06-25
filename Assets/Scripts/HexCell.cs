@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.IO;
+using TMPro;
 
 public class HexCell : MonoBehaviour {
 
@@ -8,12 +9,6 @@ public class HexCell : MonoBehaviour {
 	public RectTransform uiRect;
 
 	public HexGridChunk chunk;
-
-	public Color Color {
-		get {
-			return HexMetrics.colors[terrainTypeIndex];
-		}
-	}
 
 	public int Elevation {
 		get {
@@ -220,8 +215,24 @@ public class HexCell : MonoBehaviour {
 		}
 	}
 
-	int terrainTypeIndex;
+	void UpdateDistanceLabel()
+	{
+		TextMeshProUGUI label = uiRect.GetComponent<TextMeshProUGUI>();
+		label.text = distance == int.MaxValue ? "" : distance.ToString();
+	}
 
+	public int Distance
+	{
+		get { return distance; }
+		set
+		{
+			distance = value;
+			UpdateDistanceLabel();
+		}
+	}
+
+	int terrainTypeIndex;
+	private int distance;
 	int elevation = int.MinValue;
 	int waterLevel;
 
@@ -234,11 +245,9 @@ public class HexCell : MonoBehaviour {
 	bool hasIncomingRiver, hasOutgoingRiver;
 	HexDirection incomingRiver, outgoingRiver;
 
-	[SerializeField]
-	HexCell[] neighbors;
+	[SerializeField] HexCell[] neighbors = null;
 
-	[SerializeField]
-	bool[] roads;
+	[SerializeField] bool[] roads = null;
 
 	public HexCell GetNeighbor (HexDirection direction) {
 		return neighbors[(int)direction];
