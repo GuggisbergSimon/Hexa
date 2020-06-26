@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.IO;
 using TMPro;
+using UnityEngine.UI;
 
 public class HexCell : MonoBehaviour {
 
@@ -10,6 +11,17 @@ public class HexCell : MonoBehaviour {
 
 	public HexGridChunk chunk;
 
+	public HexCell PathFrom { get; set; }
+	
+	public int SearchHeuristic { get; set; }
+	
+	public HexCell NextWithSamePriority { get; set; }
+
+	public int SearchPriority
+	{
+		get { return distance + SearchHeuristic; }
+	}
+	
 	public int Elevation {
 		get {
 			return elevation;
@@ -268,6 +280,19 @@ public class HexCell : MonoBehaviour {
 		return HexMetrics.GetEdgeType(
 			elevation, otherCell.elevation
 		);
+	}
+
+	public void DisableHighlight()
+	{
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.enabled = false;
+	}
+	
+	public void EnableHighlight(Color color)
+	{
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.color = color;
+		highlight.enabled = true;
 	}
 
 	public bool HasRiverThroughEdge (HexDirection direction) {
