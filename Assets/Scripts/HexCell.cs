@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using System.IO;
-using TMPro;
 using UnityEngine.UI;
+using System.IO;
 
 public class HexCell : MonoBehaviour {
 
@@ -11,17 +10,10 @@ public class HexCell : MonoBehaviour {
 
 	public HexGridChunk chunk;
 
-	public HexCell PathFrom { get; set; }
-	
-	public int SearchHeuristic { get; set; }
-	
-	public HexCell NextWithSamePriority { get; set; }
+	public int Index { get; set; }
 
-	public int SearchPriority
-	{
-		get { return distance + SearchHeuristic; }
-	}
-	
+	public bool IsExplored { get; private set; }
+
 	public int Elevation {
 		get {
 			return elevation;
@@ -222,29 +214,46 @@ public class HexCell : MonoBehaviour {
 		set {
 			if (terrainTypeIndex != value) {
 				terrainTypeIndex = value;
-				Refresh();
+				ShaderData.RefreshTerrain(this);
 			}
 		}
 	}
 
-	void UpdateDistanceLabel()
-	{
-		TextMeshProUGUI label = uiRect.GetComponent<TextMeshProUGUI>();
-		label.text = distance == int.MaxValue ? "" : distance.ToString();
-	}
-
-	public int Distance
-	{
-		get { return distance; }
-		set
-		{
-			distance = value;
-			UpdateDistanceLabel();
+	public bool IsVisible {
+		get {
+			return visibility > 0;
 		}
 	}
 
+	public int Distance {
+		get {
+			return distance;
+		}
+		set {
+			distance = value;
+		}
+	}
+
+	public HexUnit Unit { get; set; }
+
+	public HexCell PathFrom { get; set; }
+
+	public int SearchHeuristic { get; set; }
+
+	public int SearchPriority {
+		get {
+			return distance + SearchHeuristic;
+		}
+	}
+
+	public int SearchPhase { get; set; }
+
+	public HexCell NextWithSamePriority { get; set; }
+
+	public HexCellShaderData ShaderData { get; set; }
+
 	int terrainTypeIndex;
-	private int distance;
+
 	int elevation = int.MinValue;
 	int waterLevel;
 
@@ -252,14 +261,36 @@ public class HexCell : MonoBehaviour {
 
 	int specialIndex;
 
+	int distance;
+
+	int visibility;
+
 	bool walled;
 
 	bool hasIncomingRiver, hasOutgoingRiver;
 	HexDirection incomingRiver, outgoingRiver;
 
-	[SerializeField] HexCell[] neighbors = null;
+	[SerializeField]
+	HexCell[] neighbors;
 
-	[SerializeField] bool[] roads = null;
+	[SerializeField]
+	bool[] roads;
+
+	public void IncreaseVisibility () {
+		visibility += 1;
+		if (visibility == 1)
+		{
+			IsExplored = true;
+			ShaderData.RefreshVisibility(this);
+		}
+	}
+
+	public void DecreaseVisibility () {
+		visibility -= 1;
+		if (visibility == 0) {
+			ShaderData.RefreshVisibility(this);
+		}
+	}
 
 	public HexCell GetNeighbor (HexDirection direction) {
 		return neighbors[(int)direction];
@@ -280,19 +311,6 @@ public class HexCell : MonoBehaviour {
 		return HexMetrics.GetEdgeType(
 			elevation, otherCell.elevation
 		);
-	}
-
-	public void DisableHighlight()
-	{
-		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
-		highlight.enabled = false;
-	}
-	
-	public void EnableHighlight(Color color)
-	{
-		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
-		highlight.color = color;
-		highlight.enabled = true;
 	}
 
 	public bool HasRiverThroughEdge (HexDirection direction) {
@@ -433,11 +451,17 @@ public class HexCell : MonoBehaviour {
 					neighbor.chunk.Refresh();
 				}
 			}
+			if (Unit) {
+				Unit.ValidateLocation();
+			}
 		}
 	}
 
 	void RefreshSelfOnly () {
 		chunk.Refresh();
+		if (Unit) {
+			Unit.ValidateLocation();
+		}
 	}
 
 	public void Save (BinaryWriter writer) {
@@ -471,10 +495,12 @@ public class HexCell : MonoBehaviour {
 			}
 		}
 		writer.Write((byte)roadFlags);
+		writer.Write(IsExplored);
 	}
 
-	public void Load (BinaryReader reader) {
+	public void Load (BinaryReader reader, int header) {
 		terrainTypeIndex = reader.ReadByte();
+		ShaderData.RefreshTerrain(this);
 		elevation = reader.ReadByte();
 		RefreshPosition();
 		waterLevel = reader.ReadByte();
@@ -506,5 +532,24 @@ public class HexCell : MonoBehaviour {
 		for (int i = 0; i < roads.Length; i++) {
 			roads[i] = (roadFlags & (1 << i)) != 0;
 		}
+
+		IsExplored = header >= 3 ? reader.ReadBoolean() : false;
+		ShaderData.RefreshVisibility(this);
+	}
+
+	public void SetLabel (string text) {
+		UnityEngine.UI.Text label = uiRect.GetComponent<Text>();
+		label.text = text;
+	}
+
+	public void DisableHighlight () {
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.enabled = false;
+	}
+
+	public void EnableHighlight (Color color) {
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.color = color;
+		highlight.enabled = true;
 	}
 }
