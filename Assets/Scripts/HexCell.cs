@@ -12,7 +12,21 @@ public class HexCell : MonoBehaviour {
 
 	public int Index { get; set; }
 
-	public bool IsExplored { get; private set; }
+	public bool Explorable { get; set; }
+
+	public bool IsExplored
+	{
+		get
+		{
+			return explored && Explorable;
+		}
+		private set
+		{
+			explored = value;
+		}
+	}
+
+	private bool explored;
 
 	public int Elevation {
 		get {
@@ -22,7 +36,13 @@ public class HexCell : MonoBehaviour {
 			if (elevation == value) {
 				return;
 			}
+
+			int originalViewElevation = ViewElevation;
 			elevation = value;
+			if (ViewElevation != originalViewElevation)
+			{
+				ShaderData.ViewElevationChanged();
+			}
 			RefreshPosition();
 			ValidateRivers();
 
@@ -36,6 +56,8 @@ public class HexCell : MonoBehaviour {
 		}
 	}
 
+	public int ColumnIndex { get; set; }
+
 	public int WaterLevel {
 		get {
 			return waterLevel;
@@ -44,7 +66,13 @@ public class HexCell : MonoBehaviour {
 			if (waterLevel == value) {
 				return;
 			}
+
+			int originalViewElevation = ViewElevation;
 			waterLevel = value;
+			if (ViewElevation != originalViewElevation)
+			{
+				ShaderData.ViewElevationChanged();
+			}
 			ValidateRivers();
 			Refresh();
 		}
@@ -114,7 +142,6 @@ public class HexCell : MonoBehaviour {
 			return transform.localPosition;
 		}
 	}
-
 
 	public float StreamBedY {
 		get {
@@ -221,7 +248,7 @@ public class HexCell : MonoBehaviour {
 
 	public bool IsVisible {
 		get {
-			return visibility > 0;
+			return visibility > 0 && Explorable;
 		}
 	}
 
@@ -271,11 +298,25 @@ public class HexCell : MonoBehaviour {
 	HexDirection incomingRiver, outgoingRiver;
 
 	[SerializeField]
-	HexCell[] neighbors;
+	HexCell[] neighbors = null;
 
 	[SerializeField]
-	bool[] roads;
+	bool[] roads = null;
 
+	public int ViewElevation
+	{
+		get { return elevation >= waterLevel ? elevation : waterLevel; }
+	}
+
+	public void ResetVisibility()
+	{
+		if (visibility > 0)
+		{
+			visibility = 0;
+			ShaderData.RefreshVisibility(this);
+		}
+	}
+	
 	public void IncreaseVisibility () {
 		visibility += 1;
 		if (visibility == 1)
@@ -466,7 +507,7 @@ public class HexCell : MonoBehaviour {
 
 	public void Save (BinaryWriter writer) {
 		writer.Write((byte)terrainTypeIndex);
-		writer.Write((byte)elevation);
+		writer.Write((byte)(elevation + 127));
 		writer.Write((byte)waterLevel);
 		writer.Write((byte)urbanLevel);
 		writer.Write((byte)farmLevel);
@@ -502,6 +543,10 @@ public class HexCell : MonoBehaviour {
 		terrainTypeIndex = reader.ReadByte();
 		ShaderData.RefreshTerrain(this);
 		elevation = reader.ReadByte();
+		if (header >= 4)
+		{
+			elevation -= 127;
+		}
 		RefreshPosition();
 		waterLevel = reader.ReadByte();
 		urbanLevel = reader.ReadByte();
@@ -551,5 +596,10 @@ public class HexCell : MonoBehaviour {
 		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
 		highlight.color = color;
 		highlight.enabled = true;
+	}
+	
+	public void SetMapData(float data)
+	{
+		ShaderData.SetMapData(this, data);
 	}
 }

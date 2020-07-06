@@ -3,13 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-public class HexUnit : MonoBehaviour {
+public class HexUnit : MonoBehaviour
+{
 
 	const float rotationSpeed = 180f;
 	const float travelSpeed = 4f;
-	const int visionRange = 3;
 
-	public static HexUnit unitPrefab;
+	public int VisionRange {
+		get { return 3; }
+	}
+
+public static HexUnit unitPrefab;
 
 	public int Speed
 	{
@@ -23,13 +27,14 @@ public class HexUnit : MonoBehaviour {
 		}
 		set {
 			if (location) {
-				Grid.DecreaseVisibility(location, visionRange);
+				Grid.DecreaseVisibility(location, VisionRange);
 				location.Unit = null;
 			}
 			location = value;
 			value.Unit = this;
-			Grid.IncreaseVisibility(value, visionRange);
+			Grid.IncreaseVisibility(value, VisionRange);
 			transform.localPosition = value.Position;
+			Grid.MakeChildOfColumn(transform, value.ColumnIndex);
 		}
 	}
 
@@ -91,18 +96,40 @@ public class HexUnit : MonoBehaviour {
 	IEnumerator TravelPath () {
 		Vector3 a, b, c = pathToTravel[0].Position;
 		yield return LookAt(pathToTravel[1].Position);
-		Grid.DecreaseVisibility(
-			currentTravelLocation ? currentTravelLocation : pathToTravel[0],
-			visionRange
-		);
+		if (!currentTravelLocation)
+		{
+			currentTravelLocation = pathToTravel[0];
+		}
+
+		Grid.DecreaseVisibility(currentTravelLocation, VisionRange);
+		int currentColumn = currentTravelLocation.ColumnIndex;
 
 		float t = Time.deltaTime * travelSpeed;
 		for (int i = 1; i < pathToTravel.Count; i++) {
 			currentTravelLocation = pathToTravel[i];
 			a = c;
 			b = pathToTravel[i - 1].Position;
+			
+			int nextColumn = currentTravelLocation.ColumnIndex;
+			if (currentColumn != nextColumn)
+			{
+				if (nextColumn < currentColumn - 1)
+				{
+					a.x -= HexMetrics.innerDiameter * HexMetrics.wrapSize;
+					b.x -= HexMetrics.innerDiameter * HexMetrics.wrapSize;
+				}
+				else if (nextColumn > currentColumn + 1)
+				{
+					a.x += HexMetrics.innerDiameter * HexMetrics.wrapSize;
+					b.x += HexMetrics.innerDiameter * HexMetrics.wrapSize;
+				}
+				Grid.MakeChildOfColumn(transform, nextColumn);
+				currentColumn = nextColumn;
+			}
+
 			c = (b + currentTravelLocation.Position) * 0.5f;
-			Grid.IncreaseVisibility(pathToTravel[i], visionRange);
+			Grid.IncreaseVisibility(pathToTravel[i], VisionRange);
+			
 			for (; t < 1f; t += Time.deltaTime * travelSpeed) {
 				transform.localPosition = Bezier.GetPoint(a, b, c, t);
 				Vector3 d = Bezier.GetDerivative(a, b, c, t);
@@ -110,7 +137,7 @@ public class HexUnit : MonoBehaviour {
 				transform.localRotation = Quaternion.LookRotation(d);
 				yield return null;
 			}
-			Grid.DecreaseVisibility(pathToTravel[i], visionRange);
+			Grid.DecreaseVisibility(pathToTravel[i], VisionRange);
 			t -= 1f;
 		}
 		currentTravelLocation = null;
@@ -118,7 +145,7 @@ public class HexUnit : MonoBehaviour {
 		a = c;
 		b = location.Position;
 		c = b;
-		Grid.IncreaseVisibility(location, visionRange);
+		Grid.IncreaseVisibility(location, VisionRange);
 		for (; t < 1f; t += Time.deltaTime * travelSpeed) {
 			transform.localPosition = Bezier.GetPoint(a, b, c, t);
 			Vector3 d = Bezier.GetDerivative(a, b, c, t);
@@ -134,6 +161,18 @@ public class HexUnit : MonoBehaviour {
 	}
 
 	IEnumerator LookAt (Vector3 point) {
+		if (HexMetrics.Wrapping)
+		{
+			float xDistance = point.x - transform.localPosition.x;
+			if (xDistance < -HexMetrics.innerRadius * HexMetrics.wrapSize)
+			{
+				point.x += HexMetrics.innerDiameter * HexMetrics.wrapSize;
+			}
+			else if (xDistance > HexMetrics.innerRadius * HexMetrics.wrapSize)
+			{
+				point.x -= HexMetrics.innerDiameter * HexMetrics.wrapSize;
+			}
+		}
 		point.y = transform.localPosition.y;
 		Quaternion fromRotation = transform.localRotation;
 		Quaternion toRotation =
@@ -159,7 +198,7 @@ public class HexUnit : MonoBehaviour {
 
 	public void Die () {
 		if (location) {
-			Grid.DecreaseVisibility(location, visionRange);
+			Grid.DecreaseVisibility(location, VisionRange);
 		}
 		location.Unit = null;
 		Destroy(gameObject);
@@ -182,8 +221,8 @@ public class HexUnit : MonoBehaviour {
 		if (location) {
 			transform.localPosition = location.Position;
 			if (currentTravelLocation) {
-				Grid.IncreaseVisibility(location, visionRange);
-				Grid.DecreaseVisibility(currentTravelLocation, visionRange);
+				Grid.IncreaseVisibility(location, VisionRange);
+				Grid.DecreaseVisibility(currentTravelLocation, VisionRange);
 				currentTravelLocation = null;
 			}
 		}
